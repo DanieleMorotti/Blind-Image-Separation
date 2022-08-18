@@ -1,0 +1,10 @@
+# vscode folder
+.vscode/
+
+# venv environemnt
+.ipynb_checkpoints/
+
+__pycache__/
+
+# History charts
+evaluation/images
