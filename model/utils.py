@@ -21,11 +21,25 @@ def check_training_args():
     mode = p.add_mutually_exclusive_group(required=True)
     mode.add_argument('-resume', '--resume-training', dest='resume', help='Resume the training starting from the weights of the prompted file.', type=lambda x: check_file(p, x))
     mode.add_argument('-train', '--new-training', dest='train', help='It starts a new training', action='store_true')
+    p.add_argument('-lr', '--learning-rate', dest='lr', help='The learning rate given to the optimizer.', type=float, required=False)
+    p.add_argument('-lo', '--loss', dest='loss', help='The loss to use during training.', type=str, required=False)
+    p.add_argument('-met', '--metrics', dest='metrics', help='The metrics you want to consider during training.', nargs='+', required=False)
+    p.add_argument('-trs', '--train-steps', dest='train_steps', help='The number of steps before declaring an epoch finished.', type=int)
+    p.add_argument('-vals', '--validation-steps', dest='val_steps', help='The number of steps to draw before stopping during validation.', type=int)
+    p.add_argument('-ep', '--epochs', dest='epochs', help='The number of epochs before stopping the training.', type=int)
 
     args = p.parse_args()
-    mode = 'new_train' if args.train else 'resume_train'
+    param = dict(args._get_kwargs())
 
-    return mode, args.resume
+    if args.train:
+        mode = 'new_train' 
+    else:
+        mode = 'resume_train'
+        del param['resume']
+    del param['train']
+    # Filter removing the values that are None
+    param = dict(filter(lambda item: item[1] is not None, param.items()))
+    return mode, args.resume, param
 
 
 # Plot the history considering the evaluated metrics
@@ -39,6 +53,6 @@ def plot_history(history, metrics, save_images=False):
             plt.plot(history[f'val_{m}'], c='r', label=f'validation {m}')
         plt.legend(loc='upper right') 
         if save_images:
-            plt.savefig(f"./evaluation/images/plot_{m}.png", facecolor="white")
+            plt.savefig(f"../images/plot_{m}.png", facecolor="white")
         plt.show()
 

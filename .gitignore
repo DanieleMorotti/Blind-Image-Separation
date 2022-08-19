@@ -7,4 +7,4 @@
 __pycache__/
 
 # History charts
-evaluation/images
+images/plot*.png

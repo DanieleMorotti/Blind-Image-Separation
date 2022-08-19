@@ -19,10 +19,7 @@ def initialize_callbacks(monitor, patience_es, min_delta_es, patience_lr, factor
 
 
 # Train the model with the desired parameters and return the history
-def train_model(
-    model, train_gen, val_gen, lr=1e-3, loss='mse', metrics=['mean_squared_error'], callbacks=[], 
-    train_steps=6500, val_steps=500, epochs=200
-):
+def train_model(model, train_gen, val_gen, lr, loss, metrics, callbacks, train_steps, val_steps, epochs):
 
     model.compile(optimizer=Adam(learning_rate=lr), loss=loss, metrics=metrics)
     print("Start training...")
@@ -35,10 +32,7 @@ def train_model(
 
 
 # Resume training starting from the weights in "start_weights"
-def resume_training(
-    model, start_weights, train_gen, val_gen, lr=1e-3, loss='mse', metrics=['mean_squared_error'], callbacks=[], 
-    train_steps=6500, val_steps=500, epochs=200
-):
+def resume_training(model, start_weights, train_gen, val_gen, lr, loss, metrics, callbacks, train_steps, val_steps, epochs):
     print(f"Loading weights from {start_weights}")
     model.load_weights(start_weights)
 
@@ -51,21 +45,25 @@ def resume_training(
 
 
 # Actually run the training after creating the dataset and a model
-def execute_training(model, mode, start_weights, weights_cp_path):
+def execute_training(
+    model, mode, start_weights, weights_cp_path, lr=1e-3, loss='mse', metrics=['mean_squared_error'], 
+    callbacks=[], train_steps=6500, val_steps=500, epochs=200
+):
     
     train_gen, val_gen, _ = create_generators(batch_train=32, batch_val=32, batch_test=1024)
-    callbacks = initialize_callbacks("val_loss", 8, 1e-6, 4, 0.4, 1e-6, "min", weights_cp_path)
+    if len(callbacks) == 0:
+        callbacks = initialize_callbacks("val_loss", 8, 1e-6, 4, 0.4, 1e-6, "min", weights_cp_path)
 
     print("TRAINING\n")
     if mode == 'new_train':
         history, metrics = train_model(
-                                model, train_gen, val_gen, lr=1e-3, loss='mse', metrics=['mean_squared_error'], 
-                                callbacks=callbacks, train_steps=6500, val_steps=500, epochs=200
+                                model, train_gen, val_gen, lr=lr, loss=loss, metrics=metrics, 
+                                callbacks=callbacks, train_steps=train_steps, val_steps=val_steps, epochs=epochs
                             )
     else:
         history, metrics = resume_training(
-                                model, start_weights, train_gen, val_gen, lr=1e-3, loss='mse', metrics=['mean_squared_error'],
-                                callbacks=callbacks, train_steps=6500, val_steps=500, epochs=200
+                                model, start_weights, train_gen, val_gen, lr=lr, loss=loss, metrics=metrics,
+                                callbacks=callbacks, train_steps=train_steps, val_steps=val_steps, epochs=epochs
                             )
     return history, metrics
 
@@ -73,7 +71,7 @@ def execute_training(model, mode, start_weights, weights_cp_path):
 if __name__ == '__main__':
         
     model = build_model(input_shape=(32, 32, 1), n_ch=128, blocks=3, conv_per_b=2)
-    mode, start_weights = check_training_args()
-    execute_training(model, mode, start_weights, "../weights/cp_weights.h5")
+    mode, start_weights, param = check_training_args()
+    execute_training(model, mode, start_weights, "../weights/cp_weights.h5", **param)
    
 
